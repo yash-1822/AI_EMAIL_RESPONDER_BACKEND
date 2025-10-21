@@ -1,14 +1,13 @@
-# Use Java 21 runtime
-FROM eclipse-temurin:21-jre-alpine
-
-# Set working directory inside container
+# Stage 1: Build the JAR
+FROM maven:3.9.3-eclipse-temurin-21 AS build
 WORKDIR /app
+COPY pom.xml .
+COPY src ./src
+RUN mvn clean package -DskipTests
 
-# Copy the JAR
-COPY target/com.email.dm-0.0.1-SNAPSHOT.jar app.jar
-
-# Expose the port
+# Stage 2: Create lightweight runtime image
+FROM eclipse-temurin:21-jre-alpine
+WORKDIR /app
+COPY --from=build /app/target/com.email.dm-0.0.1-SNAPSHOT.jar app.jar
 EXPOSE 8080
-
-# Run the JAR
 ENTRYPOINT ["java","-jar","app.jar"]
